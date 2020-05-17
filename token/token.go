@@ -15,7 +15,6 @@ var keywords = map[string]TokenType{
     "let"    : LET,
     "true"   : TRUE,
     "false"  : FALS,
-
 }
 
 func IdentifierLookup(identifier string) TokenType{

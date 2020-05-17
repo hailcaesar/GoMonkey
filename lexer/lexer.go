@@ -13,7 +13,7 @@ type Lexer struct{
 }
 
 
-func  NewLexer(code string) *Lexer{
+func  New(code string) *Lexer{
     l := &Lexer{input : code}
     l.readChar()
     return l

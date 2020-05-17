@@ -7,7 +7,7 @@ import (
 
 func TestNextToken(t *testing.T){
     inputs := [...]string{`=+(){},;let`,
-                        `let five = 5;
+                        `let five 5;
                         let ten = 10;
 
                         let add = fn(x, y) {
@@ -125,7 +125,7 @@ func TestNextToken(t *testing.T){
         {token.EOF, ""},
     }
     
-    l := NewLexer(inputs[1])
+    l := New(inputs[1])
 
     for i, tt := range tests {
         tok := l.NextToken()

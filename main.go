@@ -2,27 +2,18 @@ package main
 
 import (
 	"fmt"
-	"gomonkey/lexer"
-	"gomonkey/parser"
+	"gomonkey/repl"
+	"os"
+	"os/user"
 )
 
 func main() {
-	tests := []struct {
-		input    string
-		expected string
-	}{
-		{
-			"a * b + c",
-			"((a * b) + c)",
-		},
+	user, err := user.Current()
+	if err != nil {
+		panic(err)
 	}
-	for _, tt := range tests {
-		l := lexer.New(tt.input)
-		p := parser.New(l)
-		code := p.ParseCode()
-		actual := code.String()
-		if actual != tt.expected {
-			fmt.Println("expected=%q, got=%q", tt.expected, actual)
-		}
-	}
+	fmt.Printf("Hello %s! This is the Monkey codeming language!\n",
+		user.Username)
+	fmt.Printf("Feel free to type in commands\n")
+	repl.Start(os.Stdin, os.Stdout)
 }

@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+/*  ----------------------------------------------------------- */
+/*  --- Interfaces -------------------------------------------- */
+/*  ----------------------------------------------------------- */
+
 type Node interface {
 	TokenLiteral() string
 	String() string
@@ -41,25 +45,11 @@ func (c *Code) String() string {
 	return output.String()
 }
 
-type ReturnStatement struct {
-	Token token.Token
-	Value Expression
-}
+/*  ----------------------------------------------------------- */
+/*  --- Statements -------------------------------------------- */
+/*  ----------------------------------------------------------- */
 
-func (r *ReturnStatement) statementNode()       {}
-func (r *ReturnStatement) TokenLiteral() string { return r.Token.Literal }
-func (r *ReturnStatement) String() string {
-	var output bytes.Buffer
-	output.WriteString(r.TokenLiteral() + " ")
-
-	if r.Value != nil {
-		output.WriteString(r.Value.String())
-	}
-
-	output.WriteString(";")
-	return output.String()
-}
-
+/* Anything other than 'let' or 'return' is part of an ExpressionStatement */
 type ExpressionStatement struct {
 	Token      token.Token
 	Expression Expression
@@ -74,6 +64,9 @@ func (e *ExpressionStatement) String() string {
 	return ""
 }
 
+/*
+  Variable declarations
+*/
 type LetStatement struct {
 	Token token.Token
 	Name  *Identifier
@@ -94,7 +87,52 @@ func (ls *LetStatement) String() string {
 	return output.String()
 }
 
-//Implements the Expression interface
+/*
+  Return keyword + optional expression
+  Eg.  return a + b,  return 5 * 10, return fn(a,b){ a + b }
+*/
+type ReturnStatement struct {
+	Token token.Token
+	Value Expression
+}
+
+func (r *ReturnStatement) statementNode()       {}
+func (r *ReturnStatement) TokenLiteral() string { return r.Token.Literal }
+func (r *ReturnStatement) String() string {
+	var output bytes.Buffer
+	output.WriteString(r.TokenLiteral() + " ")
+
+	if r.Value != nil {
+		output.WriteString(r.Value.String())
+	}
+
+	output.WriteString(";")
+	return output.String()
+}
+
+/*
+  Collection of statements that occur in an if block
+*/
+type BlockStatement struct {
+	Token      token.Token // '{' token
+	Statements []Statement
+}
+
+func (bs *BlockStatement) statementNode()       {}
+func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Literal }
+func (bs *BlockStatement) String() string {
+	var out bytes.Buffer
+	for _, s := range bs.Statements {
+		out.WriteString(s.String())
+	}
+	return out.String()
+}
+
+/*  ----------------------------------------------------------- */
+/*  --- Expressions ------------------------------------------- */
+/*  ----------------------------------------------------------- */
+
+/* Variable names */
 type Identifier struct {
 	Token token.Token
 	Value string
@@ -104,34 +142,9 @@ func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
 func (i *Identifier) String() string       { return i.Value }
 
-type IntegerLiteral struct {
-	Token token.Token
-	Value int64
-}
-
-func (il *IntegerLiteral) expressionNode()      {}
-func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
-func (il *IntegerLiteral) String() string       { return il.Token.Literal }
-
-type PrefixExpression struct {
-	Token    token.Token
-	Operator string
-	Right    Expression
-}
-
-func (pe *PrefixExpression) expressionNode()      {}
-func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
-func (pe *PrefixExpression) String() string {
-	var output bytes.Buffer
-	output.WriteString("(")
-	output.WriteString(pe.Operator)
-	output.WriteString(pe.Right.String())
-	output.WriteString(")")
-	return output.String()
-}
-
+/* Expressions that have a left and right operands */
 type InfixExpression struct {
-	Token    token.Token // The operator token, e.g. +
+	Token    token.Token //  Operator token (e.g. +)
 	Left     Expression
 	Operator string
 	Right    Expression
@@ -149,6 +162,37 @@ func (oe *InfixExpression) String() string {
 	return output.String()
 }
 
+/* Integers only, doesn't support floats/doubles */
+type IntegerLiteral struct {
+	Token token.Token
+	Value int64
+}
+
+func (il *IntegerLiteral) expressionNode()      {}
+func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
+func (il *IntegerLiteral) String() string       { return il.Token.Literal }
+
+/*
+   Expressions meant for operators that do not have a left expression
+   Eg.  -5, !ok, -count  */
+type PrefixExpression struct {
+	Token    token.Token
+	Operator string
+	Right    Expression
+}
+
+func (pe *PrefixExpression) expressionNode()      {}
+func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
+func (pe *PrefixExpression) String() string {
+	var output bytes.Buffer
+	output.WriteString("(")
+	output.WriteString(pe.Operator)
+	output.WriteString(pe.Right.String())
+	output.WriteString(")")
+	return output.String()
+}
+
+/* True and False */
 type Boolean struct {
 	Token token.Token
 	Value bool
@@ -158,23 +202,11 @@ func (b *Boolean) expressionNode()      {}
 func (b *Boolean) TokenLiteral() string { return b.Token.Literal }
 func (b *Boolean) String() string       { return b.Token.Literal }
 
-type BlockStatement struct {
-	Token      token.Token // the { token
-	Statements []Statement
-}
-
-func (bs *BlockStatement) statementNode()       {}
-func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Literal }
-func (bs *BlockStatement) String() string {
-	var out bytes.Buffer
-	for _, s := range bs.Statements {
-		out.WriteString(s.String())
-	}
-	return out.String()
-}
-
+/*
+ If statements
+*/
 type IfExpression struct {
-	Token       token.Token // The 'if' token
+	Token       token.Token // 'if' token
 	Condition   Expression
 	Consequence *BlockStatement
 	Alternative *BlockStatement
@@ -195,8 +227,11 @@ func (ie *IfExpression) String() string {
 	return out.String()
 }
 
+/*
+  Function declarations
+*/
 type FunctionLiteral struct {
-	Token      token.Token // The 'fn' token
+	Token      token.Token // fn' token
 	Parameters []*Identifier
 	Body       *BlockStatement
 }
@@ -217,6 +252,10 @@ func (fl *FunctionLiteral) String() string {
 	return out.String()
 }
 
+/*
+  Function calls
+  foo(a, b, c),   bar(a, 5*8+9, z)
+*/
 type CallExpression struct {
 	Token     token.Token // The '(' token
 	Function  Expression  // Identifier or FunctionLiteral
